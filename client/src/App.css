@@ -20,3 +20,10 @@
 .App-link {
   color: #09d3ac;
 }
+
+
+img.coin {
+  width: 50px;
+  height: 50px;
+  margin-right: 16px;
+}

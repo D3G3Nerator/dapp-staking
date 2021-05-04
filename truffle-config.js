@@ -14,15 +14,11 @@ module.exports = {
       network_id: 5777
     },
     rinkeby: {
-      provider: function() {
-        return new HDWalletProvider( [ process.env.PRIVATE_KEY ], `https://rinkeby.infura.io/v3/${process.env.INFURA_API_KEY}`)
-      },
+      provider: () => new HDWalletProvider( [ process.env.PRIVATE_KEY ], `https://rinkeby.infura.io/v3/${process.env.INFURA_API_KEY}`),
       network_id: 4
     },
     ropsten: {
-      provider: function() {
-        return new HDWalletProvider( [ process.env.PRIVATE_KEY ], `https://ropsten.infura.io/v3/${process.env.INFURA_API_KEY}`)
-      },
+      provider: () => new HDWalletProvider( [ process.env.PRIVATE_KEY ], `https://ropsten.infura.io/v3/${process.env.INFURA_API_KEY}`),
       network_id: 3
     }
   },
