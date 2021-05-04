@@ -3,18 +3,17 @@ import HappyChefContract from "./contracts/HappyChef.json";
 import getWeb3 from "./getWeb3";
 
 import Button from 'react-bootstrap/Button';
-import Card from 'react-bootstrap/Card';
 import CardDeck from 'react-bootstrap/CardDeck';
 import Container from 'react-bootstrap/Container';
-import Nav from 'react-bootstrap/Nav';
 import Navbar from 'react-bootstrap/Navbar';
 
+import Pool from './components/Pool';
 
 import "./App.css";
 
 
 class App extends Component {
-  state = { storageValue: 0, web3: null, accounts: null, contract: null };
+  state = { pools: [], web3: null, accounts: null, contract: null };
 
   componentDidMount = async () => {
     try {
@@ -35,12 +34,12 @@ class App extends Component {
 
       // Callback when account is changed in Metamask
       window.ethereum.on('accountsChanged', accounts => {
-          console.log(`Accounts updated ${accounts}`);
+          console.log(`Accounts updated: ${accounts}`);
           this.setState({ accounts: accounts });
       });
 
       window.ethereum.on('chainChanged', networkId => {
-          console.log(`Network updated ${networkId}`);
+          console.log(`Network updated: ${networkId}`);
       });
 
       this.setState({ web3, accounts, contract: instance }, this.populate);
@@ -50,22 +49,26 @@ class App extends Component {
     }
   };
 
-  populate = async () => {
-    const { accounts, contract } = this.state;
 
-    console.log('CALL getNbPools()');
+  populate = async () => {
+    const { contract } = this.state;
+
     const nbPools = await contract.methods.getNbPools().call();
-    console.log('nbPools = ' + nbPools);
+    var pools = Array.from({length: nbPools}, (_, i) => i)
    
-    this.setState({ nbPools: nbPools });
+    this.setState({ pools: pools });
   };
+
+
+  ellipsis(s) {
+    return s.substring(0, 6) + '...' + s.substring(s.length - 4, s.length);
+  }
+
 
   render() {
     if (!this.state.web3) {
       return <div>Loading Web3, accounts, and contract...</div>;
     }
-
-
 
     return (
       <div>
@@ -75,55 +78,15 @@ class App extends Component {
             { ' ' } Happy Staking
           </Navbar.Brand>
           <Navbar.Collapse className="justify-content-end">
-              <Button variant="outline-primary">Connect</Button>
+                <Button variant="outline-primary">{ this.state.accounts ? this.ellipsis(this.state.accounts[0]) : 'Connect' }</Button>
           </Navbar.Collapse>
         </Navbar>
 
         <Container>
             <CardDeck style={{ padding: '16px' }}>
-              <Card style={{ width: '18rem' }}>
-                <Card.Body>
-                  <Card.Title><img className="coin" src="images/dai-coin.svg" />DAI staking</Card.Title>
-                  <Card.Text>
-                    APR: XX.XX %<br />
-                    Earn: HAPPY
-                  </Card.Text>
-                  <Card.Link><Button variant="primary">Unlock</Button></Card.Link>
-                  <Card.Link><Button variant="primary">Stake</Button></Card.Link>
-                  <Card.Link><Button variant="primary">Unstake</Button></Card.Link>
-                </Card.Body>
-                <Card.Footer>
-                  <small className="text-muted">Total Liquidity: XXX,XXX,XXX</small>
-                </Card.Footer>
-              </Card>
-              <Card style={{ width: '18rem' }}>
-                <Card.Body>
-                  <Card.Title><img className="coin" src="images/usdc-coin.svg" />USDC staking</Card.Title>
-                  <Card.Text>
-                    APR: XX.XX %<br />
-                    Earn: HAPPY
-                  </Card.Text>
-                  <Card.Link><Button variant="primary">Unlock</Button></Card.Link>
-                  <Card.Link><Button variant="primary">Stake</Button></Card.Link>
-                </Card.Body>
-                <Card.Footer>
-                  <small className="text-muted">Total Liquidity: XXX,XXX,XXX</small>
-                </Card.Footer>
-              </Card>
-              <Card style={{ width: '18rem' }}>
-                <Card.Body>
-                  <Card.Title><img className="coin" src="images/usdt-coin.svg" />USDT staking</Card.Title>
-                  <Card.Text>
-                    APR: XX.XX %<br />
-                    Earn: HAPPY
-                  </Card.Text>
-                  <Card.Link><Button variant="primary">Unlock</Button></Card.Link>
-                  <Card.Link><Button variant="primary">Stake</Button></Card.Link>
-                </Card.Body>
-                <Card.Footer>
-                  <small className="text-muted">Total Liquidity: XXX,XXX,XXX</small>
-                </Card.Footer>
-              </Card>
+              { this.state.pools.map(pool => (
+                <Pool web3={this.state.web3} contract={this.state.contract} account={this.state.accounts[0]} id={pool} key={pool} />
+              ))}
             </CardDeck>
         </Container>
       </div>
