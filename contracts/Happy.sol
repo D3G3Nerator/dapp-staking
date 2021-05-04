@@ -6,7 +6,7 @@ import '@openzeppelin/contracts/access/Ownable.sol';
 
 
 // Happy token. 
-// Ownership must be transfered to HappyChef, for reward minting.
+// @notice Ownership must be transfered to HappyChef, for reward minting.
 contract Happy is ERC20, Ownable {
 
   constructor() ERC20('Happy coin', 'HAPPY') {    
