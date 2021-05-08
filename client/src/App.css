@@ -27,3 +27,15 @@ img.coin {
   height: 50px;
   margin-right: 16px;
 }
+
+.right {
+  text-align: right;
+}
+
+.title {
+  font-size: 12px;
+  font-weight: bold;
+  line-height: 1.5;
+  text-transform: uppercase;
+  padding: 1em;
+}

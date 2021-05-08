@@ -7,7 +7,7 @@ var ChainLinkStub = artifacts.require("./ChainLinkStub.sol");
 
 module.exports = (deployer, network, accounts) => {
   deployer.deploy(Happy).then(() => {
-    return deployer.deploy(HappyChef, Happy.address).then(async () => {
+    return deployer.deploy(HappyChef, Happy.address, 1).then(async () => {
 
       if (network === 'develop') {
         console.log('---=== Deploying stubs ===---');
@@ -18,13 +18,13 @@ module.exports = (deployer, network, accounts) => {
         const happyChef = await HappyChef.deployed();
 
         deployer.deploy(TokenStub, 'DAI Token', 'DAI').then(async () => {
-          await happyChef.addPool(TokenStub.address, ChainLinkStub.address);
+          await happyChef.addPool(TokenStub.address, ChainLinkStub.address, 1000);
         });
         deployer.deploy(TokenStub, 'USDC Token', 'USDC').then(async () => {
-          await happyChef.addPool(TokenStub.address, ChainLinkStub.address);
+          await happyChef.addPool(TokenStub.address, ChainLinkStub.address, 1000);
         });
         deployer.deploy(TokenStub, 'USDT Token', 'USDT').then(async () => {
-          await happyChef.addPool(TokenStub.address, ChainLinkStub.address);
+          await happyChef.addPool(TokenStub.address, ChainLinkStub.address, 1000);
         });
 
         await happy.transferOwnership(happyChef.address);

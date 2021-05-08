@@ -13,7 +13,7 @@ import "./App.css";
 
 
 class App extends Component {
-  state = { pools: [], web3: null, accounts: null, contract: null };
+  state = { web3: null, accounts: null, contract: null, pools: [] };
 
   componentDidMount = async () => {
     try {

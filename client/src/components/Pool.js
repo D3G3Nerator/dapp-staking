@@ -4,6 +4,8 @@ import PropTypes from 'prop-types';
 
 import Button from 'react-bootstrap/Button';
 import Card from 'react-bootstrap/Card';
+import Col from 'react-bootstrap/Col';
+import Row from 'react-bootstrap/Row';
 
 import ERC20Contract from "../contracts/ERC20.json";
 
@@ -15,6 +17,8 @@ class Pool extends Component {
         web3: this.props.web3,
         contract: this.props.contract,
         account: this.props.account,
+
+        claim: 0,
 
         token: null,
         pool: null
@@ -38,18 +42,64 @@ class Pool extends Component {
             <Card.Body>
                 <Card.Title>
                     <img className="coin" alt={ 'coin ' + this.state.id } src={ this.state.icon } />
-                    {this.state.token} staking
+                    { this.state.token } staking
                 </Card.Title>
-                <Card.Text>
-                APR: XX.XX %<br />
-                Earn: HAPPY
-                </Card.Text>
-                <Card.Link><Button variant="primary">Unlock</Button></Card.Link>
-                <Card.Link><Button variant="primary">Stake</Button></Card.Link>
-                <Card.Link><Button variant="primary">Unstake</Button></Card.Link>
+                    <Row>
+                        <Col>
+                            APR:
+                        </Col>
+                        <Col className="right">
+                            12.00 %
+                        </Col>
+                    </Row>
+                    <Row>
+                        <Col>
+                            Earn:
+                        </Col>
+                        <Col className="right">
+                            HAPPY
+                        </Col>
+                    </Row>
+                    <Row>
+                        <div className="title">HAPPY earned</div>
+                    </Row>
+                    <Row>
+                        <Col>
+                            { this.state.claim }
+                        </Col>
+                        <Col className="right">
+                            <Button variant="primary" disabled={ this.state.claim === 0 }>Claim</Button>
+                        </Col>
+                    </Row>
+                    <Row>
+                        <div className="title">{ this.state.token } stacked</div>
+                    </Row>
+                    <Row>
+                        <Col>
+                            0
+                        </Col>
+                        <Col className="right">
+                            <Button variant="primary" disabled>Unlock</Button>
+                        </Col>
+                    </Row>
             </Card.Body>
             <Card.Footer>
-                <small className="text-muted">Total Liquidity: XXX,XXX,XXX</small>
+                <Row>
+                    <Col>
+                        Total Liquidity
+                    </Col>
+                    <Col className="right">
+                        1,000,000.00
+                    </Col>
+                </Row>
+                <Row>
+                    <Col>
+                        My staked value
+                    </Col>
+                    <Col className="right">
+                        0
+                    </Col>
+                </Row>
             </Card.Footer>
         </Card>
         );
