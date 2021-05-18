@@ -7,8 +7,7 @@ var ChainLinkStub = artifacts.require("./ChainLinkStub.sol");
 
 module.exports = (deployer, network, accounts) => {
   deployer.deploy(Happy).then(() => {
-    return deployer.deploy(HappyChef, Happy.address, 1).then(async () => {
-
+    return deployer.deploy(HappyChef, Happy.address, '10000000000000000000').then(async () => {
       if (network === 'develop') {
         console.log('---=== Deploying stubs ===---');
     

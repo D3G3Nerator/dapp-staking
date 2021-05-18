@@ -1,4 +1,4 @@
-const { BN, expectRevert } = require("@openzeppelin/test-helpers");
+const { BN, ether, expectRevert } = require("@openzeppelin/test-helpers");
 const { expect } = require("chai");
 
 const Happy = artifacts.require("./Happy.sol");
@@ -15,17 +15,17 @@ contract("HappyChef", accounts => {
 
   beforeEach(async () => {
     this.Happy = await Happy.new();
-    this.HappyChef = await HappyChef.new(this.Happy.address);
+    this.HappyChef = await HappyChef.new(this.Happy.address, ether('10'));
 
     await this.Happy.transferOwnership(this.HappyChef.address, { from: admin });
 
     this.Dai = await TokenStub.new("DAI Token", "DAI");
     this.Usdc = await TokenStub.new("USDC Token", "USDC");
 
-    this.ChainLink = await ChainLinkStub.new();
+    this.ChainLink = await ChainLinkStub.new(1);
 
-    this.HappyChef.addPool(this.Dai.address, this.ChainLink.address);
-    this.HappyChef.addPool(this.Usdc.address, this.ChainLink.address);
+    this.HappyChef.addPool(this.Dai.address, this.ChainLink.address, 100);
+    this.HappyChef.addPool(this.Usdc.address, this.ChainLink.address, 100);
   });
 
 
@@ -41,5 +41,12 @@ contract("HappyChef", accounts => {
     expect(pool1.token).to.be.equal(this.Usdc.address);
     expect(pool1.amount).to.be.bignumber.equal(new BN(0));
     expect(pool1.priceFeed).to.be.equal(this.ChainLink.address);
+  });
+
+
+  it("... test", async () => {
+    await this.Happy.approve(this.HappyChef.address, ether('100')).send({ from: admin });
+    await this.HappyChef.stake(0, ether('100')).send({ from: admin});
+    await debug ( this.HappyChef.pendingReward.call(0, admin) );
   });
 });
