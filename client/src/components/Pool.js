@@ -24,9 +24,12 @@ class Pool extends Component {
         this.account = this.props.account;
 
         this.state = {
+            yield: 0,
+            price: 0,
+
             claim: '0',
-            poolBalance: '0',
-            userBalance: '0',
+            poolBalance: 0,
+            userBalance: 0,
             unlocked: false,
 
             token: null,
@@ -44,6 +47,8 @@ class Pool extends Component {
     
     async componentDidMount() {
         this.pool = await this.contract.methods.pools(this.id).call();
+        this.setState({ yield: this.pool.yield / 100 });
+        this.updatePrices();
 
         // Get the pool token contract instance.
         this.token = new this.web3.eth.Contract(ERC20Contract.abi, this.pool.token);
@@ -53,8 +58,45 @@ class Pool extends Component {
         this.token.methods.allowance(this.account, this.contract._address).call().then((remaining) => this.setState({ unlocked: Number(remaining) !== 0 }));
 
         this.contract.methods.pendingReward(this.id, this.account).call().then((reward) => this.setState({ claim: reward }));
-        this.contract.methods.getUserBalance(this.id, this.account).call().then((balance) => this.setState({ userBalance: balance }));
-        this.contract.methods.getPoolBalance(this.id).call().then((total) => this.setState({ poolBalance: total }));
+        this.updatePoolBalance();
+        this.updateUserBalance();
+
+        this.web3.eth.subscribe('newBlockHeaders', (err, res) => {
+            if (!err) {
+                this.onNewBlock(res);
+            }
+        });
+    }
+
+
+    onNewBlock = async (block) => {
+        this.updatePrices();
+    }
+
+
+    updatePrices = () => {
+        this.contract.methods.pendingReward(this.id, this.account).call().then((reward) => {
+            this.setState({ claim: reward });
+            console.log("Pending = " + this.state.claim); 
+
+        });
+        this.contract.methods.getLastPrice(this.id).call().then((res) => {             
+            this.setState({ price: Number(res) }); 
+        });
+    }
+
+
+    updatePoolBalance = () => {
+        this.contract.methods.getPoolBalance(this.id).call().then((balance) => {
+            this.setState({ poolBalance: Number(this.web3.utils.fromWei(balance, 'ether')) });
+        });
+    }
+
+
+    updateUserBalance = () => {
+        this.contract.methods.getUserBalance(this.id, this.account).call().then((balance) => {            
+            this.setState({ userBalance: Number(this.web3.utils.fromWei(balance, 'ether')) });
+        });
     }
 
 
@@ -68,18 +110,20 @@ class Pool extends Component {
 
     onDeposit = async () => {
         const balance = await this.token.methods.balanceOf(this.account).call();
-        this.setState({ depositShow: true, tokenBalance: this.web3.utils.fromWei(balance, 'ether') });
+        this.setState({ depositShow: true, depositLoading: true, tokenBalance: this.web3.utils.fromWei(balance, 'ether') });
     }
 
 
     onWithdraw = async () => {
-        this.setState({ withdrawShow: true });
+        this.setState({ withdrawShow: true, withdrawLoading: true });
     }
 
 
     onDepositClose = async () => {
         this.contract.methods.stake(this.id, this.web3.utils.toWei(this.state.deposit, 'ether')).send({from: this.account}).then((res) => {
-            this.contract.methods.getUserBalance(this.id, this.account).call().then((balance) => this.setState({ userBalance: balance }));
+            this.updateUserBalance();
+            this.updatePoolBalance();
+            this.setState({ depositLoading: false });
         });
         this.setState({ depositShow: false });
     }
@@ -87,7 +131,8 @@ class Pool extends Component {
 
     onWithdrawClose = async () => {
         this.contract.methods.unstake(this.id, this.web3.utils.toWei(this.state.withdraw, 'ether')).send({from: this.account}).then((res) => {
-            this.contract.methods.getUserBalance(this.id, this.account).call().then((balance) => this.setState({ userBalance: balance }));
+            this.updateUserBalance();
+            this.setState({ withdrawLoading: false });
         });
         this.setState({ withdrawShow: false });
     }
@@ -95,7 +140,7 @@ class Pool extends Component {
 
     onClaim = async() => {
         this.contract.methods.unstake(this.id, 0).send({from: this.account}).then(() => {
-            this.contract.methods.pendingReward(this.id, this.account).call().then((reward) => this.setState({ claim: reward }));
+            this.updatePrices();
         });
     }
 
@@ -115,7 +160,7 @@ class Pool extends Component {
                             APR:
                         </Col>
                         <Col className="right">
-                            TODO 12.00 %
+                            { this.state.yield } %
                         </Col>
                     </Row>
                     <Row>
@@ -131,7 +176,7 @@ class Pool extends Component {
                     </Row>
                     <Row>
                         <Col>
-                            { this.web3.utils.fromWei(this.state.claim, 'ether') }
+                            $ { Number(this.web3.utils.fromWei(this.state.claim, 'ether')).toFixed(6) }
                         </Col>
                         <Col className="right">
                             <Button variant="primary" onClick={this.onClaim} disabled={ this.state.claim === '0' }>Claim</Button>
@@ -142,7 +187,7 @@ class Pool extends Component {
                     </Row>
                     <Row>
                         <Col>
-                            { this.web3.utils.fromWei(this.state.userBalance, 'ether') }
+                            { this.state.userBalance }
                         </Col>
                         <Col className="right">
                             { !this.state.unlocked &&
@@ -181,7 +226,7 @@ class Pool extends Component {
                         Total Liquidity
                     </Col>
                     <Col className="right">
-                        TODO { this.web3.utils.fromWei(this.state.poolBalance, 'ether') }
+                        $ { this.state.price * this.state.poolBalance }
                     </Col>
                 </Row>
                 <Row>
@@ -189,7 +234,7 @@ class Pool extends Component {
                         My staked value
                     </Col>
                     <Col className="right">
-                        TODO { this.web3.utils.fromWei(this.state.userBalance, 'ether') }
+                        $ { this.state.price * this.state.userBalance }
                     </Col>
                 </Row>
             </Card.Footer>
@@ -223,7 +268,7 @@ class Pool extends Component {
             <Modal.Body>
                 <Form>
                     <Form.Group>
-                        Your {this.state.token} balance: { this.web3.utils.fromWei(this.state.userBalance, 'ether') } 
+                        Your {this.state.token} balance: { this.state.userBalance } 
                         {/* <Button className="float-right" variant="outline-secondary" onClick={this.setState({ deposit: this.state.tokenBalance })} >Max</Button> */}
                     </Form.Group>
                     <Form.Group>
