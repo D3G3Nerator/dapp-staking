@@ -1,11 +1,12 @@
 import React, { Component } from "react";
 import HappyChefContract from "./contracts/HappyChef.json";
+import HappyContract from "./contracts/Happy.json";
+import ERC20Contract from "./contracts/ERC20.json";
 import getWeb3 from "./getWeb3";
 
 import Button from 'react-bootstrap/Button';
 import CardDeck from 'react-bootstrap/CardDeck';
 import Container from 'react-bootstrap/Container';
-import Form from 'react-bootstrap/Form';
 import Navbar from 'react-bootstrap/Navbar';
 
 import Pool from './components/Pool';
@@ -14,7 +15,7 @@ import "./App.css";
 
 
 class App extends Component {
-  state = { web3: null, accounts: null, contract: null, pools: [], happyPrice: 1 };
+  state = { web3: null, accounts: null, contract: null, pools: [], happyPrice: 1, happyBalance: 0 };
 
   componentDidMount = async () => {
     try {
@@ -32,6 +33,9 @@ class App extends Component {
         HappyChefContract.abi,
         deployedNetwork && deployedNetwork.address,
       );
+
+      // Get the happy token contract instance.
+      this.happy = new web3.eth.Contract(ERC20Contract.abi, HappyContract.networks[networkId].address);
 
       // Callback when account is changed in Metamask
       window.ethereum.on('accountsChanged', accounts => {
@@ -63,10 +67,20 @@ class App extends Component {
             this.setState({ happyPrice: this.state.web3.utils.fromWei(res, 'ether') }));
   }
 
+
+  updateHappyBalance = () => {
+    this.happy.methods.balanceOf(this.state.accounts[0]).call().then((balance) => {
+      this.setState({ happyBalance: Number(this.state.web3.utils.fromWei(balance, 'ether')).toFixed(6) });
+    });
+  }
+
+
   populate = async () => {
     const { contract } = this.state;
 
+    this.updateHappyBalance();
     this.updateHappyPrice();
+
     const nbPools = await contract.methods.getNbPools().call();
     var pools = Array.from({length: nbPools}, (_, i) => i)
    
@@ -102,17 +116,17 @@ class App extends Component {
             </Navbar.Text>
           </Navbar>
           <Navbar.Collapse className="justify-content-end">
-                
-                <Form inline>
-                  <Button variant="outline-primary">{ this.state.accounts ? this.ellipsis(this.state.accounts[0]) : 'Connect' }</Button>
-                </Form>
+            <Button variant="outline-subtle">{ this.state.happyBalance } HAPPY</Button>
+            <Button variant="outline-primary">{ this.state.accounts ? this.ellipsis(this.state.accounts[0]) : 'Connect' }</Button>
           </Navbar.Collapse>
         </Navbar>
 
         <Container>
             <CardDeck style={{ padding: '16px' }}>
               { this.state.pools.map(pool => (
-                <Pool web3={this.state.web3} contract={this.state.contract} account={this.state.accounts[0]} id={pool} key={pool} />
+                <Pool web3={this.state.web3} contract={this.state.contract} account={this.state.accounts[0]} 
+                  updateHappyBalance={this.updateHappyBalance}
+                  id={pool} key={pool} />
               ))}
             </CardDeck>
         </Container>

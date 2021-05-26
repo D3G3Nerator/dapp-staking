@@ -3,7 +3,7 @@ pragma solidity 0.8.3;
 
 import '@openzeppelin/contracts/access/Ownable.sol';
 import '@openzeppelin/contracts/security/ReentrancyGuard.sol';
-import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
+import '@openzeppelin/contracts/token/ERC20/ERC20.sol';
 import '@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol';
 
 import './Happy.sol';
@@ -17,7 +17,7 @@ contract HappyChef is Ownable, ReentrancyGuard {
     }
 
     struct PoolInfo {
-        IERC20 token;               // Address of the staked token
+        ERC20 token;               // Address of the staked token
         uint256 yield;              // Percentage yield for the pool, with 2 decimals
         AggregatorV3Interface priceFeed;    // ChainLink oracle for the staked token
     }
@@ -35,7 +35,7 @@ contract HappyChef is Ownable, ReentrancyGuard {
     AggregatorV3Interface public happyPriceFeed;
 
     event PoolAdded(uint256 poolId, address token, address priceFeed);
-    event PriceFeedUpdated(uint256 poolId, IERC20 token, address priceFeed);
+    event PriceFeedUpdated(uint256 poolId, ERC20 token, address priceFeed);
     event Staked(address user, uint256 poolId, uint256 amount);
     event Unstaked(address user, uint256 poolId, uint256 amount);
     event Redeemed(address user, uint256 poolId, uint256 amount);
@@ -87,7 +87,7 @@ contract HappyChef is Ownable, ReentrancyGuard {
         require(!found, "Pool with this token already exists.");
 
         pools.push(PoolInfo({
-            token: IERC20(_token),
+            token: ERC20(_token),
             yield: _yield,
             priceFeed: AggregatorV3Interface(_priceFeed)
         }));
@@ -124,12 +124,30 @@ contract HappyChef is Ownable, ReentrancyGuard {
 
 
     function _calculateReward(uint256 poolId, PoolInfo storage pool, UserInfo storage user) internal view returns (uint256) {
-        uint256 diff = (block.timestamp - user.depositDate) / 60 / 60 / 24 / 365 days;
-
         return user.amount 
-            * diff                                          // Datetime pro rata
-            * pool.yield / 100 /100                         // Pool yield (first / 100 is for 2 decimals, second is for %)
-            * getLastPrice(poolId) / getLastHappyPrice();   // Adjustment to price
+            * (block.timestamp - user.depositDate) / 60 / 60 / 24   // Datetime pro rata
+            * pool.yield / 100 / 100 / 365                          // Pool yield (First / 100 is for 2 decimals, second is for %)
+            * getLastPrice(poolId) / getLastHappyPrice()            // Adjustment to price
+            * 10 ** pool.token.decimals();
+    }
+
+
+    function calculateRewardDebug(uint256 _poolId, address _user) external validPool(_poolId) view returns (
+        uint256 amount, 
+        uint256 base, 
+        uint256 delta, 
+        uint256 yield, 
+        uint256 tokenPrice,
+        uint256 happyPrice) {
+        PoolInfo storage pool = pools[_poolId];
+        UserInfo storage user = users[_poolId][_user];
+
+        amount = user.amount;
+        base = 10 ** pool.token.decimals();
+        delta = block.timestamp - user.depositDate;
+        yield = pool.yield;
+        tokenPrice = getLastPrice(_poolId);
+        happyPrice = getLastHappyPrice();
     }
 
 

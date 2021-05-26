@@ -22,6 +22,7 @@ class Pool extends Component {
         this.web3 = this.props.web3;
         this.contract = this.props.contract;
         this.account = this.props.account;
+        this.updateHappyBalance = this.props.updateHappyBalance;
 
         this.state = {
             yield: 0,
@@ -77,7 +78,18 @@ class Pool extends Component {
     updatePrices = () => {
         this.contract.methods.pendingReward(this.id, this.account).call().then((reward) => {
             this.setState({ claim: reward });
-            console.log("Pending = " + this.state.claim); 
+
+            // DEBUG ONLY
+            this.contract.methods.calculateRewardDebug(this.id, this.account).call().then((res) => {
+                if (res[0] !== '0') {
+                    console.log("Amount = " + res[0]);
+                    console.log("Base = " + res[1]);
+                    console.log("Delta = " + res[2]);
+                    console.log("Yield = " + res[3]);
+                    console.log("Token = " + res[4]);
+                    console.log("Happy = " + res[5]);
+                }
+            })
 
         });
         this.contract.methods.getLastPrice(this.id).call().then((res) => {             
@@ -139,8 +151,11 @@ class Pool extends Component {
 
 
     onClaim = async() => {
+        this.setState({ claimLoading: true });
         this.contract.methods.unstake(this.id, 0).send({from: this.account}).then(() => {
             this.updatePrices();
+            this.setState({ claimLoading: false });
+            this.updateHappyBalance();
         });
     }
 
@@ -176,10 +191,15 @@ class Pool extends Component {
                     </Row>
                     <Row>
                         <Col>
-                            $ { Number(this.web3.utils.fromWei(this.state.claim, 'ether')).toFixed(6) }
+                            { Number(this.web3.utils.fromWei(this.state.claim, 'ether')).toFixed(6) }
                         </Col>
                         <Col className="right">
-                            <Button variant="primary" onClick={this.onClaim} disabled={ this.state.claim === '0' }>Claim</Button>
+                            <Button variant="primary" onClick={this.onClaim} disabled={ this.state.claim === '0' }>
+                                    { this.state.claimLoading && 
+                                        <Spinner as="span" animation="border" size="sm" />
+                                    }
+                                Claim
+                            </Button>
                         </Col>
                     </Row>
                     <Row>
@@ -223,7 +243,7 @@ class Pool extends Component {
             <Card.Footer>
                 <Row>
                     <Col>
-                        Total Liquidity
+                        Total Pool Liquidity
                     </Col>
                     <Col className="right">
                         $ { this.state.price * this.state.poolBalance }
@@ -293,7 +313,8 @@ Pool.propTypes = {
     web3: PropTypes.object.isRequired,
     contract: PropTypes.object.isRequired,
     account: PropTypes.string.isRequired,
-    id: PropTypes.number.isRequired
+    id: PropTypes.number.isRequired,
+    updateHappyBalance: PropTypes.func.isRequired,
 }
 
 
