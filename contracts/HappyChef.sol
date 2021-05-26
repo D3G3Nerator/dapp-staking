@@ -123,31 +123,13 @@ contract HappyChef is Ownable, ReentrancyGuard {
     }
 
 
-    function _calculateReward(uint256 poolId, PoolInfo storage pool, UserInfo storage user) internal view returns (uint256) {
-        return user.amount 
-            * (block.timestamp - user.depositDate) / 60 / 60 / 24   // Datetime pro rata
-            * pool.yield / 100 / 100 / 365                          // Pool yield (First / 100 is for 2 decimals, second is for %)
-            * getLastPrice(poolId) / getLastHappyPrice()            // Adjustment to price
-            * 10 ** pool.token.decimals();
-    }
+    function _calculateReward(uint256 _poolId, PoolInfo storage _pool, UserInfo storage _user) internal view returns (uint256) {
+        uint256 pending = _user.amount 
+            * (block.timestamp - _user.depositDate) / 60 / 60 / 24   // Datetime pro rata
+            * _pool.yield / 100 / 100 / 365                          // Pool yield (First / 100 is for 2 decimals, second is for %)
+            * getLastPrice(_poolId) / getLastHappyPrice();           // Adjustment to price
 
-
-    function calculateRewardDebug(uint256 _poolId, address _user) external validPool(_poolId) view returns (
-        uint256 amount, 
-        uint256 base, 
-        uint256 delta, 
-        uint256 yield, 
-        uint256 tokenPrice,
-        uint256 happyPrice) {
-        PoolInfo storage pool = pools[_poolId];
-        UserInfo storage user = users[_poolId][_user];
-
-        amount = user.amount;
-        base = 10 ** pool.token.decimals();
-        delta = block.timestamp - user.depositDate;
-        yield = pool.yield;
-        tokenPrice = getLastPrice(_poolId);
-        happyPrice = getLastHappyPrice();
+        return pending;
     }
 
 
@@ -190,15 +172,22 @@ contract HappyChef is Ownable, ReentrancyGuard {
 
 
     function getLastPrice(uint256 _poolId) public view validPool(_poolId) returns (uint256) {        
+        PoolInfo storage pool = pools[_poolId];
+
         (
             /*uint80 roundId*/,
             int price,
             /*uint startAt*/,
             /*uint timestamp*/,
             /*uint80 answeredInRound*/
-        ) = pools[_poolId].priceFeed.latestRoundData();
+        ) = pool.priceFeed.latestRoundData();
 
-        return uint256(price);
+        uint256 lastPrice = uint256(price);
+        if (pool.token.decimals() != 18) {
+            lastPrice *= 10 ** (18 - pool.token.decimals());
+        }
+
+        return lastPrice;
     }
 
 

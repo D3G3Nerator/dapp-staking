@@ -28,7 +28,7 @@ class Pool extends Component {
             yield: 0,
             price: 0,
 
-            claim: '0',
+            claim: 0,
             poolBalance: 0,
             userBalance: 0,
             unlocked: false,
@@ -77,37 +77,24 @@ class Pool extends Component {
 
     updatePrices = () => {
         this.contract.methods.pendingReward(this.id, this.account).call().then((reward) => {
-            this.setState({ claim: reward });
-
-            // DEBUG ONLY
-            this.contract.methods.calculateRewardDebug(this.id, this.account).call().then((res) => {
-                if (res[0] !== '0') {
-                    console.log("Amount = " + res[0]);
-                    console.log("Base = " + res[1]);
-                    console.log("Delta = " + res[2]);
-                    console.log("Yield = " + res[3]);
-                    console.log("Token = " + res[4]);
-                    console.log("Happy = " + res[5]);
-                }
-            })
-
+            this.setState({ claim:  Number(this.web3.utils.fromWei(reward)).toFixed(6) });
         });
-        this.contract.methods.getLastPrice(this.id).call().then((res) => {             
-            this.setState({ price: Number(res) }); 
+        this.contract.methods.getLastPrice(this.id).call().then((price) => {      
+            this.setState({ price: Number(this.web3.utils.fromWei(price)) }); 
         });
     }
 
 
     updatePoolBalance = () => {
         this.contract.methods.getPoolBalance(this.id).call().then((balance) => {
-            this.setState({ poolBalance: Number(this.web3.utils.fromWei(balance, 'ether')) });
+            this.setState({ poolBalance: Number(this.web3.utils.fromWei(balance)).toFixed(2) });
         });
     }
 
 
     updateUserBalance = () => {
         this.contract.methods.getUserBalance(this.id, this.account).call().then((balance) => {            
-            this.setState({ userBalance: Number(this.web3.utils.fromWei(balance, 'ether')) });
+            this.setState({ userBalance: Number(this.web3.utils.fromWei(balance)) });
         });
     }
 
@@ -122,7 +109,7 @@ class Pool extends Component {
 
     onDeposit = async () => {
         const balance = await this.token.methods.balanceOf(this.account).call();
-        this.setState({ depositShow: true, depositLoading: true, tokenBalance: this.web3.utils.fromWei(balance, 'ether') });
+        this.setState({ depositShow: true, depositLoading: true, tokenBalance: this.web3.utils.fromWei(balance) });
     }
 
 
@@ -132,7 +119,7 @@ class Pool extends Component {
 
 
     onDepositClose = async () => {
-        this.contract.methods.stake(this.id, this.web3.utils.toWei(this.state.deposit, 'ether')).send({from: this.account}).then((res) => {
+        this.contract.methods.stake(this.id, this.web3.utils.toWei(this.state.deposit)).send({from: this.account}).then((res) => {
             this.updateUserBalance();
             this.updatePoolBalance();
             this.setState({ depositLoading: false });
@@ -142,7 +129,7 @@ class Pool extends Component {
 
 
     onWithdrawClose = async () => {
-        this.contract.methods.unstake(this.id, this.web3.utils.toWei(this.state.withdraw, 'ether')).send({from: this.account}).then((res) => {
+        this.contract.methods.unstake(this.id, this.web3.utils.toWei(this.state.withdraw)).send({from: this.account}).then((res) => {
             this.updateUserBalance();
             this.setState({ withdrawLoading: false });
         });
@@ -191,10 +178,10 @@ class Pool extends Component {
                     </Row>
                     <Row>
                         <Col>
-                            { Number(this.web3.utils.fromWei(this.state.claim, 'ether')).toFixed(6) }
+                            { this.state.claim }
                         </Col>
                         <Col className="right">
-                            <Button variant="primary" onClick={this.onClaim} disabled={ this.state.claim === '0' }>
+                            <Button variant="primary" onClick={this.onClaim} disabled={ this.state.claim === 0 }>
                                     { this.state.claimLoading && 
                                         <Spinner as="span" animation="border" size="sm" />
                                     }

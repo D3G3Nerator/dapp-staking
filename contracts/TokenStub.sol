@@ -13,4 +13,8 @@ contract TokenStub is ERC20 {
         _mint(0x4166F24706226d3c2A134a0966A8d534FCea31Cc, 1000000 ether);
     }
 
+     function decimals() public view override returns (uint8) {
+        return 8;
+    }
+
 }
