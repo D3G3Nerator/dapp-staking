@@ -27,6 +27,7 @@ class Pool extends Component {
         this.state = {
             yield: 0,
             price: 0,
+            rewardPrice: 0,
 
             claim: 0,
             poolBalance: 0,
@@ -58,7 +59,6 @@ class Pool extends Component {
         });
         this.token.methods.allowance(this.account, this.contract._address).call().then((remaining) => this.setState({ unlocked: Number(remaining) !== 0 }));
 
-        this.contract.methods.pendingReward(this.id, this.account).call().then((reward) => this.setState({ claim: reward }));
         this.updatePoolBalance();
         this.updateUserBalance();
 
@@ -76,11 +76,14 @@ class Pool extends Component {
 
 
     updatePrices = () => {
-        this.contract.methods.pendingReward(this.id, this.account).call().then((reward) => {
-            this.setState({ claim:  Number(this.web3.utils.fromWei(reward)).toFixed(6) });
+        this.contract.methods.pendingReward(this.id, this.account).call().then((reward) => {            
+            this.setState({ claim:  Number(this.web3.utils.fromWei(reward)) });
         });
-        this.contract.methods.getLastPrice(this.id).call().then((price) => {      
+        this.contract.methods.getLastPrice(this.id).call().then((price) => { 
             this.setState({ price: Number(this.web3.utils.fromWei(price)) }); 
+        });
+        this.contract.methods.getLastHappyPrice().call().then((price) => { 
+            this.setState({ rewardPrice: Number(this.web3.utils.fromWei(price)) }); 
         });
     }
 
@@ -178,7 +181,7 @@ class Pool extends Component {
                     </Row>
                     <Row>
                         <Col>
-                            { this.state.claim }
+                            $ { (this.state.rewardPrice * this.state.claim).toFixed(6) }
                         </Col>
                         <Col className="right">
                             <Button variant="primary" onClick={this.onClaim} disabled={ this.state.claim === 0 }>
