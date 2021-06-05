@@ -133,6 +133,18 @@ contract HappyChef is Ownable, ReentrancyGuard {
     }
 
 
+    function calculateRewardDebug(uint256 _poolId, address _user) external view returns (uint256 userAmount, uint256 delta, uint256 yield, uint256 lastPrice, uint256 lastHappyPrice) {
+        PoolInfo storage pool = pools[_poolId];
+        UserInfo storage user = users[_poolId][_user];
+
+        userAmount = user.amount;
+        delta = block.timestamp - user.depositDate;
+        yield = pool.yield;
+        lastPrice = getLastPrice(_poolId);
+        lastHappyPrice = getLastHappyPrice();
+    }
+
+
     function _distributeReward(uint256 _poolId, PoolInfo storage _pool, UserInfo storage _user) internal {
         uint256 pending = _calculateReward(_poolId, _pool, _user);
         if (pending > 0) {

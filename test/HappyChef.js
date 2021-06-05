@@ -50,7 +50,7 @@ contract("HappyChef", accounts => {
     this.Dai = await TokenStub.new("DAI Token", "DAI");
     this.Usdc = await TokenStub.new("USDC Token", "USDC");
 
-    const amount = 1000000;
+    const amount = web3.utils.toWei(new BN(1000000));
     this.Dai.transfer(user1, amount, { from: admin });
     this.Dai.transfer(user2, amount, { from: admin });
     this.Usdc.transfer(user1, amount, { from: admin });
@@ -79,7 +79,8 @@ contract("HappyChef", accounts => {
 
 
   it("...should allow user to stake & unstake.", async () => {
-    const amount = 500000;
+    const amount = web3.utils.toWei('500000');
+    const half = web3.utils.toWei('250000');
 
     // Approve
     await this.Dai.approve(this.HappyChef.address, amount, { from: user1 });
@@ -96,14 +97,14 @@ contract("HappyChef", accounts => {
     await expectRevert(this.HappyChef.unstake(0, amount + 100, { from: user1 }), 'Insufficient staked amount');
 
     // Partial Unstake
-    await this.HappyChef.unstake(0, amount / 2, { from: user1 });
+    await this.HappyChef.unstake(0, half, { from: user1 });
     balance = await this.HappyChef.getUserBalance(0, user1);
-    expect(balance).to.be.bignumber.equal(new BN(amount / 2));
+    expect(balance).to.be.bignumber.equal(half);
     let reward = await this.Happy.balanceOf(user1);
     expect(reward).to.be.bignumber.above(new BN(0));
 
     // Total Unstake
-    await this.HappyChef.unstake(0, amount / 2, { from: user1 });
+    await this.HappyChef.unstake(0, half, { from: user1 });
     balance = await this.HappyChef.getUserBalance(0, user1);
     expect(balance).to.be.bignumber.equal(new BN(0));
     reward = await this.Happy.balanceOf(user1);
@@ -112,7 +113,7 @@ contract("HappyChef", accounts => {
 
 
   it('...should allow user to get correct reward', async () => {
-    const amount = 1000000;
+    const amount = web3.utils.toWei(new BN(1000000));
 
     // Approve
     await this.Dai.approve(this.HappyChef.address, amount, { from: user1 });
@@ -122,21 +123,40 @@ contract("HappyChef", accounts => {
     let balance = await this.HappyChef.getUserBalance(0, user1);
     expect(balance).to.be.bignumber.equal(new BN(amount));
 
+    const hp = await this.HappyChef.getLastHappyPrice();
+
     // Mine blocks
-    await this.increaseTime(60 * 60 * 24);
+    let blockNumber = await web3.eth.getBlockNumber();
+    let rsp = await web3.eth.getBlock(blockNumber);
+    const timestampBefore = rsp.timestamp;
+
+    await this.increaseTime(60 * 60 * 24 - 1);
+
+    blockNumber = await web3.eth.getBlockNumber();
+    rsp = await web3.eth.getBlock(blockNumber);
+    const timestampAfter = rsp.timestamp;
 
     // Get user reward
     const userReward = await this.HappyChef.pendingReward(0, user1);
-    console.log(userReward);
+
+    const res = await this.HappyChef.calculateRewardDebug(0, user1);
+    console.log(' ~ debug ~');
+    console.log('user amount      = ', res[0].toString());
+    console.log('delta            = ', res[1].toString());
+    console.log('yield            = ', res[2].toString());
+    console.log('last price       = ', res[3].toString());
+    console.log('last happy price = ', res[4].toString());
 
     // Calculate reward
-    const blockNumber = await web3.eth.getBlockNumber();
-    console.log(blockNumber);
-    const happyPrice = blockNumber / 1000;
-    const reward = amount * 0.15 / 365 * 1 / happyPrice;
-    console.log(reward);
+    blockNumber = await web3.eth.getBlockNumber();
+    const delta = (timestampAfter - timestampBefore) / 60 / 60 / 24;
+    const happyPrice = web3.utils.toWei(new BN(10));
+    const reward = amount * delta * 0.15 / 365 * web3.utils.toWei(new BN(1)) / happyPrice;
 
-    expect(new BN(reward)).to.be.bignumber.equal(userReward);
+    const sexpected = reward.toString();
+    const sreward = userReward.toString();
+
+    expect(sexpected.substring(0, sexpected.length - 4)).to.be.equal(sreward.substring(0, sreward.length - 4));
   });
 
 });

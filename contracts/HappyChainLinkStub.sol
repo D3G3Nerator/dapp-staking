@@ -29,10 +29,12 @@ contract HappyChainLinkStub is AggregatorV3Interface, Ownable {
 
   
     function getRoundData(uint80 _roundId) override external view returns (uint80 roundId, int256 answer, uint256 startedAt, uint256 updatedAt, uint80 answeredInRound) {
-        return (_roundId, int256(block.number * 10 ** 18 / k), 1, 1, 1);
+        //return (_roundId, int256(block.number * 10 ** 18 / k), 1, 1, 1);
+        return (_roundId, 10 * 10**18, 1, 1, 1);
     }
 
     function latestRoundData() override external view returns (uint80 roundId, int256 answer, uint256 startedAt, uint256 updatedAt, uint80 answeredInRound) {
-        return (0, int256(block.number * 10 ** 18 / k), 1, 1, 1);
+        //return (0, int256(block.number * 10 ** 18 / k), 1, 1, 1);
+        return (0, 10 * 10**18, 1, 1, 1);
     }
 }
