@@ -50,7 +50,7 @@ contract("HappyChef", accounts => {
     this.Dai = await TokenStub.new("DAI Token", "DAI");
     this.Usdc = await TokenStub.new("USDC Token", "USDC");
 
-    const amount = web3.utils.toWei(new BN(1000000));
+    const amount = new BN(1000000).mul(new BN(10).pow(await this.Dai.decimals()));
     this.Dai.transfer(user1, amount, { from: admin });
     this.Dai.transfer(user2, amount, { from: admin });
     this.Usdc.transfer(user1, amount, { from: admin });
@@ -79,8 +79,8 @@ contract("HappyChef", accounts => {
 
 
   it("...should allow user to stake & unstake.", async () => {
-    const amount = web3.utils.toWei('500000');
-    const half = web3.utils.toWei('250000');
+    const amount = new BN(500000).mul(new BN(10).pow(await this.Dai.decimals()));
+    const half = new BN(250000).mul(new BN(10).pow(await this.Dai.decimals()));
 
     // Approve
     await this.Dai.approve(this.HappyChef.address, amount, { from: user1 });
@@ -113,7 +113,7 @@ contract("HappyChef", accounts => {
 
 
   it('...should allow user to get correct reward', async () => {
-    const amount = web3.utils.toWei(new BN(1000000));
+    const amount = new BN(1000000).mul(new BN(10).pow(await this.Dai.decimals()));
 
     // Approve
     await this.Dai.approve(this.HappyChef.address, amount, { from: user1 });
@@ -153,10 +153,7 @@ contract("HappyChef", accounts => {
     const happyPrice = web3.utils.toWei(new BN(10));
     const reward = amount * delta * 0.15 / 365 * web3.utils.toWei(new BN(1)) / happyPrice;
 
-    const sexpected = reward.toString();
-    const sreward = userReward.toString();
-
-    expect(sexpected.substring(0, sexpected.length - 4)).to.be.equal(sreward.substring(0, sreward.length - 4));
+    expect(new BN(Math.trunc(reward))).to.be.bignumber.equal(userReward);
   });
 
 });

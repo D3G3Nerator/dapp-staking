@@ -184,7 +184,7 @@ class Pool extends Component {
                             $ { (this.state.rewardPrice * this.state.claim).toFixed(6) }
                         </Col>
                         <Col className="right">
-                            <Button variant="primary" onClick={this.onClaim} disabled={ this.state.claim === 0 }>
+                            <Button variant="primary" onClick={this.onClaim} disabled={ this.state.claim === 0 || this.state.claimLoading }>
                                     { this.state.claimLoading && 
                                         <Spinner as="span" animation="border" size="sm" />
                                     }
@@ -201,7 +201,7 @@ class Pool extends Component {
                         </Col>
                         <Col className="right">
                             { !this.state.unlocked &&
-                                <Button variant="primary" onClick={this.onUnlock} disabled={this.state.unlockLoading}>
+                                <Button variant="primary" onClick={this.onUnlock} disabled={this.state.unlockLoading || this.state.unlockLoading}>
                                     { this.state.unlockLoading && 
                                         <Spinner as="span" animation="border" size="sm" />
                                     }
@@ -210,7 +210,7 @@ class Pool extends Component {
                             }
                             { this.state.unlocked &&
                                 <>
-                                <Button variant="primary" onClick={this.onDeposit} disabled={this.state.depositShow}>
+                                <Button variant="primary" onClick={this.onDeposit} disabled={this.state.depositShow || this.state.depositLoading}>
                                     { this.state.depositLoading && 
                                         <Spinner as="span" animation="border" size="sm" />
                                     }
@@ -220,7 +220,7 @@ class Pool extends Component {
                                 </>
                             }
                             { this.state.unlocked && this.state.userBalance !== '0' &&
-                                <Button variant="primary" onClick={this.onWithdraw} disabled={this.state.withdrawShow}>
+                                <Button variant="primary" onClick={this.onWithdraw} disabled={this.state.withdrawShow || this.state.withdrawLoading}>
                                     { this.state.withdrawLoading && 
                                         <Spinner as="span" animation="border" size="sm" />
                                     }
