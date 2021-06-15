@@ -236,7 +236,7 @@ class Pool extends Component {
                         Total Pool Liquidity
                     </Col>
                     <Col className="right">
-                        $ { this.state.price * this.state.poolBalance }
+                        $ { (this.state.price * this.state.poolBalance).toFixed(2) }
                     </Col>
                 </Row>
                 <Row>
@@ -244,7 +244,7 @@ class Pool extends Component {
                         My staked value
                     </Col>
                     <Col className="right">
-                        $ { this.state.price * this.state.userBalance }
+                        $ { (this.state.price * this.state.userBalance).toFixed(2) }
                     </Col>
                 </Row>
             </Card.Footer>
