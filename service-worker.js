@@ -14,7 +14,7 @@
 importScripts("https://storage.googleapis.com/workbox-cdn/releases/4.3.1/workbox-sw.js");
 
 importScripts(
-  "/dapp-staking/precache-manifest.4be08148433f829eef4d56a73dc79d45.js"
+  "/dapp-staking/precache-manifest.d7ea51beaa1381b5adf0333786ce8573.js"
 );
 
 self.addEventListener('message', (event) => {
