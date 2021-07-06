@@ -11,3 +11,5 @@ This is my [Alyra](https://alyra.fr/) DeFi DApp project.
 **Requirements**
 
 * Use Chainlink oracle
+
+![screenshot](https://github.com/pgonday/dapp-staking/blob/master/screen.jpg?raw=true)
